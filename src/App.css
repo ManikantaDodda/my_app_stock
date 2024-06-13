@@ -69,7 +69,19 @@ th, td {
 .add-new-button:hover {
   background-color: #45a049;
 }
+.danger-button {
+  margin: 20px 0;
+  padding: 10px 20px;
+  background-color: #ea2d2d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-left: 9px;
+}
 
+.danger-button:hover {
+  background-color: #903145;
+}
 .modal {
   background: white;
   padding: 20px;

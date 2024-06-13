@@ -5,13 +5,20 @@ import ReactModal from 'react-modal';
 const Table = () => {
   const [stocks, setStocks] = useState([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [stockModalIsOpen, setStockModalIsOpen] = useState(false);
+  const [currentStock, setCurrentStock] = useState(null);
+  const [additionalStock, setAdditionalStock] = useState(0);
+  const [currentMethod, setCurrentMethod] = useState(null);
+  const [uid, setUid] = useState(0);
+  const [currentDate, setCurrentDate] = useState("");
   const [newStock, setNewStock] = useState({
+    uid : 0,
     brandName: '',
     stock: 0,
     price: 0,
     sales: 0,
     remainingStock: 0,
-    date: new Date().toISOString().split('T')[0],
+    date: currentDate,
   });
 
   useEffect(() => {
@@ -20,18 +27,38 @@ const Table = () => {
 
   const fetchStocks = async () => {
     try {
-        const response = await axios.get('http://localhost:5000/api/get-stock/2024-06-13' );
-        setStocks(response.data);   
+        const activeRes = await axios.get('http://localhost:5000/api/get-active-data' );
+        let date = activeRes.data.date;
+        setCurrentDate(date);
+        const response = await axios.get('http://localhost:5000/api/get-stock/'+date );
+        setStocks(response.data); 
+        setUid(response.data[0].uid);  
     } catch (error) {
         
     }
     
   };
+  const handleStockOpenModal = (stock, val) => {
+    setCurrentStock(stock);
+    setStockModalIsOpen(true);
+    setCurrentMethod(val);
+  };
+
+  const handleStockCloseModal = () => {
+    setStockModalIsOpen(false);
+    setCurrentStock(null);
+    setCurrentMethod(null);
+    setAdditionalStock(0);
+  };
+
+  const handleChangeinput = (e) => {
+    setAdditionalStock(Number(e.target.value));
+  };
 
   const handleOpenModal = () => {
     setModalIsOpen(true);
   };
-
+  
   const handleCloseModal = () => {
     setModalIsOpen(false);
   };
@@ -43,7 +70,35 @@ const Table = () => {
       [name]: value,
     });
   };
-
+  const handleCloseDay = async () => {
+    try {
+        const response = await axios.post('http://localhost:5000/api/close-day-stock', {uid} );  
+        fetchStocks();
+    } catch (error) {
+        
+    }
+  }
+  const handleAdditionalStockSubmit =  async (e) => {
+    e.preventDefault();
+    if (currentStock) {
+        try {
+          if(currentMethod == 'sales' && additionalStock > currentStock.remainingStock)
+          {
+            handleStockCloseModal();
+            return;
+          }
+          const response = await axios.post('http://localhost:5000/api/update-stock', {
+            id: currentStock._id,
+            variable : currentMethod,
+            additionalStock 
+          });
+          setStocks(stocks.map(stock => stock._id === currentStock._id ? response.data : stock));
+          handleStockCloseModal();
+        } catch (error) {
+          console.error('Error updating stock:', error);
+        }
+      }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await axios.post('http://localhost:5000/api/add-stock', {
@@ -51,7 +106,7 @@ const Table = () => {
       stock: newStock.stock,
       sales: newStock.sales,
       price: newStock.price,
-      date:newStock.date
+      date: currentDate
     });
     setStocks([...stocks, response.data]);
     handleCloseModal();
@@ -77,16 +132,52 @@ const Table = () => {
             <tr key={stock._id}>
               <td>{index + 1}</td>
               <td>{stock.brandName}</td>
-              <td>{stock.stock} <button>Add Stock</button></td>
+              <td>{stock.stock} <button onClick={() => handleStockOpenModal(stock,'stock')}>Add Stock</button></td>           
               <td>{stock.price}</td>
-              <td>{stock.sales}</td>
+              <td>{stock.sales} <button onClick={() => handleStockOpenModal(stock, 'sales')}>Add Sales</button></td>
               <td>{stock.remainingStock}</td>
               <td>{new Date(stock.date).toLocaleDateString()}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <button onClick={handleOpenModal} className="add-new-button">Add New</button>
+      <ReactModal
+                    isOpen={stockModalIsOpen}
+                    onRequestClose={handleStockCloseModal}
+                    contentLabel="Add New Stock"
+                    className="modal"
+                    overlayClassName="overlay"
+                >
+                    <h2>Add Additional Stock</h2>
+                    <form onSubmit={handleAdditionalStockSubmit}>
+                    <label>Brand Name</label>
+                    <input
+                        type="text"
+                        name="brandName"
+                        value={currentStock?.brandName}
+                        disabled
+                    />
+                    <label>Current {currentMethod == 'stock' ? 'Stock' : "Sales" }</label>
+                    <input
+                        type="text"
+                        name="brandName"
+                        value={currentStock?.[currentMethod]}
+                        disabled
+                    />
+                    <label>Additional {currentMethod == 'stock' ? 'Stock' : "Sales" }</label>
+                    <input
+                        type="number"
+                        name="stock"
+                        onChange={handleChangeinput}
+                        required
+                    />
+                    <label style={{color : "red"}}>{currentMethod === 'sales' && additionalStock > currentStock.remainingStock ? "Sales Less Than Remaining Stock" : ""}</label>
+                    <button type="submit"  disabled={currentMethod === 'sales' && additionalStock > currentStock.remainingStock}> Add Additional {currentMethod == 'stock' ? 'Stock' : "Sales" }</button>
+                    <button type="button" onClick={handleStockCloseModal}>Cancel</button>
+                    </form>
+                </ReactModal>
+      <button onClick={handleOpenModal} className="add-new-button">Add New</button> 
+      <button onClick={handleCloseDay} className="danger-button">Close</button>
       <ReactModal
         isOpen={modalIsOpen}
         onRequestClose={handleCloseModal}
@@ -136,18 +227,11 @@ const Table = () => {
             onChange={handleChange}
             required
           />
-          <label>Date</label>
-          <input
-            type="date"
-            name="date"
-            value={newStock.date}
-            onChange={handleChange}
-            required
-          />
           <button type="submit">Add Stock</button>
           <button type="button" onClick={handleCloseModal}>Cancel</button>
         </form>
       </ReactModal>
+
     </div>
   );
 };
