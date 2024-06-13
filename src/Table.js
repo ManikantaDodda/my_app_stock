@@ -10,6 +10,7 @@ const Table = () => {
   const [additionalStock, setAdditionalStock] = useState(0);
   const [currentMethod, setCurrentMethod] = useState(null);
   const [uid, setUid] = useState(0);
+  const [currentUrl, setCurrentUrl] = useState("https://stock-management-backend-iii5.onrender.com");
   const [currentDate, setCurrentDate] = useState("");
   const [newStock, setNewStock] = useState({
     uid : 0,
@@ -27,10 +28,10 @@ const Table = () => {
 
   const fetchStocks = async () => {
     try {
-        const activeRes = await axios.get('http://localhost:5000/api/get-active-data' );
+        const activeRes = await axios.get(currentUrl + '/api/get-active-data' );
         let date = activeRes.data.date;
         setCurrentDate(date);
-        const response = await axios.get('http://localhost:5000/api/get-stock/'+date );
+        const response = await axios.get(currentUrl + '/api/get-stock/'+date );
         setStocks(response.data); 
         setUid(response.data[0].uid);  
     } catch (error) {
@@ -72,7 +73,7 @@ const Table = () => {
   };
   const handleCloseDay = async () => {
     try {
-        const response = await axios.post('http://localhost:5000/api/close-day-stock', {uid} );  
+        const response = await axios.post(currentUrl + '/api/close-day-stock', {uid} );  
         fetchStocks();
     } catch (error) {
         
@@ -87,7 +88,7 @@ const Table = () => {
             handleStockCloseModal();
             return;
           }
-          const response = await axios.post('http://localhost:5000/api/update-stock', {
+          const response = await axios.post(currentUrl + '/api/update-stock', {
             id: currentStock._id,
             variable : currentMethod,
             additionalStock 
@@ -101,7 +102,7 @@ const Table = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await axios.post('http://localhost:5000/api/add-stock', {
+    const response = await axios.post(currentUrl + '/api/add-stock', {
       brandName: newStock.brandName,
       stock: newStock.stock,
       sales: newStock.sales,
