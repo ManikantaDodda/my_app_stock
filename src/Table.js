@@ -229,14 +229,6 @@ const Table = () => {
             onChange={handleChange}
             required
           />
-          <label>Remaining Stock</label>
-          <input
-            type="number"
-            name="remainingStock"
-            value={newStock.remainingStock}
-            onChange={handleChange}
-            required
-          />
           <button type="submit">Add Stock</button>
           <button type="button" onClick={handleCloseModal}>Cancel</button>
         </form>
