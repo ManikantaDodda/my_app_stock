@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const History = () => {
+  const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
   const [currentUrl, setCurrentUrl] = useState("https://stock-management-backend-iii5.onrender.com");
   const [currentDate, setCurrentDate] = useState(null);
@@ -73,7 +75,9 @@ const History = () => {
             {stocks.length > 0 ?<><th></th><th></th><th></th><th></th><th></th><th>{totalAll}</th><th></th></>:""}
         </tbody>
       </table>
-     
+      <div className="button-container">
+                <button onClick={()=>navigate('/')} className="danger-button">Back</button> 
+      </div>
     </div>
   );
 };
