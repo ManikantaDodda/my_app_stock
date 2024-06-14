@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
 
 const History = () => {
   const navigate = useNavigate();
@@ -18,7 +19,8 @@ const History = () => {
       if(currentDate)
         {
         const response = await axios.get(currentUrl + '/api/get-stock/'+currentDate );
-        setStocks(response.data); 
+        setStocks(response.data);
+        toast("Processed Successfully");
         }
     } catch (error) {
         
@@ -31,6 +33,7 @@ const History = () => {
   let totalAll = 0;
   return (
     <div className="App">
+      <ToastContainer />
       <h1>History</h1>
       <form onSubmit={fetchStocks} className="search-form">
         <div className='button-container'>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactModal from 'react-modal';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 const Table = () => {
   const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
@@ -14,7 +16,7 @@ const Table = () => {
   const [currentUrl, setCurrentUrl] = useState("https://stock-management-backend-iii5.onrender.com");
   const [currentDate, setCurrentDate] = useState("");
   const [newStock, setNewStock] = useState({
-    uid : 0,
+    uid : uid,
     brandName: '',
     stock: 0,
     price: 0,
@@ -76,6 +78,7 @@ const Table = () => {
     try {
         const response = await axios.post(currentUrl + '/api/close-day-stock', {uid} );  
         fetchStocks();
+        toast.success("Successfully Closed !");
     } catch (error) {
         
     }
@@ -96,6 +99,7 @@ const Table = () => {
           });
           setStocks(stocks.map(stock => stock._id === currentStock._id ? response.data : stock));
           handleStockCloseModal();
+          toast.success("Successfully Updated !");
         } catch (error) {
           console.error('Error updating stock:', error);
         }
@@ -104,6 +108,7 @@ const Table = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await axios.post(currentUrl + '/api/add-stock', {
+      uid : uid,
       brandName: newStock.brandName,
       stock: newStock.stock,
       sales: newStock.sales,
@@ -112,12 +117,23 @@ const Table = () => {
     });
     setStocks([...stocks, response.data]);
     handleCloseModal();
+    toast.success("Successfully Added !");
+    setNewStock({
+      uid : uid,
+      brandName: '',
+      stock: 0,
+      price: 0,
+      sales: 0,
+      remainingStock: 0,
+      date: currentDate})
   };
   let totalAll = 0;
   return (
     <div className="App">
+      <ToastContainer />
       <h1>Stock Management</h1>
       <button type="button" onClick={()=> navigate('/history')}>History</button>
+      
       <table>
         <thead>
           <tr>
