@@ -1,11 +1,16 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Table from './Table';
-function App() {
+import History from './History';
+import './App.css';
+const App = () => {
   return (
-  <>
-  <Table/>
-  </>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Table />} />
+        <Route path="/history" element={<History />} />
+      </Routes>
+    </Router>
   );
 }
 

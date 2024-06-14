@@ -112,7 +112,7 @@ const Table = () => {
     setStocks([...stocks, response.data]);
     handleCloseModal();
   };
-
+  let totalAll = 0;
   return (
     <div className="App">
       <h1>Stock Management</h1>
@@ -124,22 +124,27 @@ const Table = () => {
             <th>Stock</th>
             <th>Price</th>
             <th>Sales</th>
+            <th>Total Price</th>
             <th>Remaining Stock</th>
             <th>Date</th>
           </tr>
         </thead>
         <tbody>
-          {stocks.map((stock, index) => (
+          {stocks.map((stock, index) => {
+            totalAll += stock.sales * stock.price;
+            return(
             <tr key={stock._id}>
               <td>{index + 1}</td>
               <td>{stock.brandName}</td>
               <td>{stock.stock} <button onClick={() => handleStockOpenModal(stock,'stock')}>Add Stock</button></td>           
               <td>{stock.price}</td>
               <td>{stock.sales} <button onClick={() => handleStockOpenModal(stock, 'sales')}>Add Sales</button></td>
+              <td>{stock.sales * stock.price}</td>
               <td>{stock.remainingStock}</td>
               <td>{new Date(stock.date).toLocaleDateString()}</td>
             </tr>
-          ))}
+            );})}
+            {stocks.length > 0 ?<><th></th><th></th><th></th><th></th><th></th><th>{totalAll}</th><th></th></>:""}
         </tbody>
       </table>
       <ReactModal
@@ -177,8 +182,10 @@ const Table = () => {
                     <button type="button" onClick={handleStockCloseModal}>Cancel</button>
                     </form>
                 </ReactModal>
-      <button onClick={handleOpenModal} className="add-new-button">Add New</button> 
-      <button onClick={handleCloseDay} className="danger-button">Close</button>
+              <div className="button-container">
+                <button onClick={handleOpenModal} className="add-new-button">Add New</button> 
+                <button onClick={handleCloseDay} className="danger-button">Close</button>
+            </div>
       <ReactModal
         isOpen={modalIsOpen}
         onRequestClose={handleCloseModal}
