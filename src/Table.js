@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactModal from 'react-modal';
-
+import { useNavigate } from 'react-router-dom';
 const Table = () => {
+  const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [stockModalIsOpen, setStockModalIsOpen] = useState(false);
@@ -116,6 +117,7 @@ const Table = () => {
   return (
     <div className="App">
       <h1>Stock Management</h1>
+      <button type="button" onClick={()=> navigate('/history')}>History</button>
       <table>
         <thead>
           <tr>
