@@ -186,7 +186,7 @@ const Table = () => {
                 </ReactModal>
               <div className="button-container">
                 <button onClick={handleOpenModal} className="add-new-button">Add New</button> 
-                <button onClick={handleCloseDay} className="danger-button">Close</button>
+                <button onClick={handleCloseDay} className="danger-button">Close Today Sales</button>
             </div>
       <ReactModal
         isOpen={modalIsOpen}
