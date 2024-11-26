@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import ReactModal from 'react-modal';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Modal, Button, Form, Table as BootstrapTable, Container, InputGroup } from 'react-bootstrap';
+
+const API_URL = process.env.REACT_APP_API_URL;
+
 const Table = () => {
   const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
@@ -13,14 +17,14 @@ const Table = () => {
   const [additionalStock, setAdditionalStock] = useState(0);
   const [currentMethod, setCurrentMethod] = useState(null);
   const [uid, setUid] = useState(0);
-  const [currentUrl, setCurrentUrl] = useState("http://localhost:5000");
+  const [currentUrl, setCurrentUrl] = useState(API_URL);
   const [currentDate, setCurrentDate] = useState("");
   const [availableStock, setAvailableStock] = useState(0);
   const [sizeCount, setSizeCount] = useState({});
   const [newStock, setNewStock] = useState({
-    uid : uid,
+    uid: uid,
     brandName: '',
-    size : '',
+    size: '',
     stock: 0,
     price: 0,
     sales: 0,
@@ -34,17 +38,17 @@ const Table = () => {
 
   const fetchStocks = async () => {
     try {
-        const activeRes = await axios.get(currentUrl + '/api/get-active-data' );
-        let date = activeRes.data.date;
-        setCurrentDate(date);
-        const response = await axios.get(currentUrl + '/api/get-stock/'+date );
-        setStocks(response.data); 
-        setUid(response.data[0].uid);  
+      const activeRes = await axios.get(`${currentUrl}/api/get-active-data`);
+      let date = activeRes.data.date;
+      setCurrentDate(date);
+      const response = await axios.get(`${currentUrl}/api/get-stock/${date}`);
+      setStocks(response.data);
+      setUid(response.data[0].uid);
     } catch (error) {
-        
+      console.error(error);
     }
-    
   };
+
   const handleStockOpenModal = (stock, val) => {
     setCurrentStock(stock);
     setStockModalIsOpen(true);
@@ -65,106 +69,135 @@ const Table = () => {
   const handleOpenModal = () => {
     setModalIsOpen(true);
   };
-  
+
   const handleCloseModal = () => {
     setModalIsOpen(false);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(newStock);
     setNewStock({
       ...newStock,
       [name]: value,
     });
   };
+
   const handleCloseDay = async () => {
     try {
-        const response = await axios.post(currentUrl + '/api/close-day-stock', {uid} );  
-        fetchStocks();
-        toast.success("Successfully Closed !");
+      await axios.post(`${currentUrl}/api/close-day-stock`, { uid });
+      fetchStocks();
+      toast.success("Successfully Closed!");
     } catch (error) {
-        
+      console.error(error);
     }
-  }
-  const handleAdditionalStockSubmit =  async (e) => {
+  };
+
+  const handleAdditionalStockSubmit = async (e) => {
     e.preventDefault();
     if (currentStock) {
-        try {
-          if(currentMethod == 'sales' && additionalStock > currentStock.remainingStock)
-          {
-            handleStockCloseModal();
-            return;
-          }
-          const response = await axios.post(currentUrl + '/api/update-stock', {
-            id: currentStock._id,
-            variable : currentMethod,
-            additionalStock 
-          });
-          setStocks(stocks.map(stock => stock._id === currentStock._id ? response.data : stock));
+      try {
+        if (currentMethod === 'sales' && additionalStock > currentStock.remainingStock) {
           handleStockCloseModal();
-          toast.success("Successfully Updated !");
-        } catch (error) {
-          console.error('Error updating stock:', error);
+          return;
         }
+        const response = await axios.post(`${currentUrl}/api/update-stock`, {
+          id: currentStock._id,
+          variable: currentMethod,
+          additionalStock,
+        });
+        setStocks(stocks.map(stock => stock._id === currentStock._id ? response.data : stock));
+        handleStockCloseModal();
+        toast.success("Successfully Updated!");
+      } catch (error) {
+        console.error('Error updating stock:', error);
       }
+    }
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await axios.post(currentUrl + '/api/add-stock', {
-      uid : uid,
+    const response = await axios.post(`${currentUrl}/api/add-stock`, {
+      uid: uid,
       brandName: newStock.brandName,
-      size : newStock.size,
+      size: newStock.size,
       stock: newStock.stock,
       sales: newStock.sales,
       price: newStock.price,
-      date: currentDate
+      date: currentDate,
     });
     setStocks([...stocks, response.data]);
     handleCloseModal();
-    toast.success("Successfully Added !");
+    toast.success("Successfully Added!");
     setNewStock({
-      uid : uid,
+      uid: uid,
       brandName: '',
-      size : '',
+      size: '',
       stock: 0,
       price: 0,
       sales: 0,
       remainingStock: 0,
-      date: currentDate})
+      date: currentDate,
+    });
   };
   let totalAll = 0;
-  const handleAvailableStock = async(e, stock_id) =>{
-      e.preventDefault();
-      if (availableStock) {
-          try {
-            const response = await axios.post(currentUrl + '/api/update-available-stock', {
-              id: stock_id,
-              availableStock 
-            });
-            setStocks(stocks.map(stock => stock._id === stock_id ? response.data : stock));
-            toast.success("Successfully Updated !");
-          } catch (error) {
-            console.error('Error updating stock:', error);
-          }
+  const handleAvailableStock = async(e, stock_id, stock) =>{
+    e.preventDefault();
+    if (availableStock <= stock && availableStock > 0) {
+        try {
+          const response = await axios.post(currentUrl + '/api/update-available-stock', {
+            id: stock_id,
+            availableStock 
+          });
+          setStocks(stocks.map(stock => stock._id === stock_id ? response.data : stock));
+          toast.success("Successfully Updated !");
+          e.target.reset();
+        } catch (error) {
+          console.error('Error updating stock:', error);
         }
+      }
+      else {
+        toast.error(" Invalid Value");
+      }
 
-  }
-  useEffect(()=>{
+
+}
+
+  useEffect(() => {
     const counts = stocks.reduce((acc, item) => {
-      // Increment the count for the current size value, defaulting to 0 if not yet present
       acc[item.size] = (acc[item.size] || 0) + 1;
       return acc;
     }, {});
     setSizeCount(counts);
-  }, [stocks])
+  }, [stocks]);
+
   return (
-    <div className="App">
+    <Container>
       <ToastContainer />
-      <h1>Stock Management</h1>
-      <button type="button" onClick={()=> navigate('/history')}>History</button>
-      
-      <table>
+      <h1 className="text-center my-4">Stock Management</h1>
+      <div className="d-flex justify-content-between mb-4">
+        <div className="d-flex gap-3">
+          <Button variant="info" size='lg' onClick={() => navigate('/history')}>History</Button>
+          <button onClick={handleOpenModal} className="add-new-button btn btn-primary">Add New</button>
+        </div>
+        <h4>{new Date(currentDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</h4>
+      </div>
+
+      <BootstrapTable striped bordered hover>
+      <thead>
+        <tr>
+          <th colSpan="10" className="text-end fw-bold">Date :</th>
+          <th>
+            <b>
+              {new Date(currentDate).toLocaleDateString('en-GB', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+              })}
+            </b>
+          </th>
+        </tr>
+      </thead>
+
         <thead>
           <tr>
             <th>S.No</th>
@@ -183,23 +216,61 @@ const Table = () => {
         <tbody>
           {stocks.map((stock, index) => {
             totalAll += stock.sales * stock.price;
-            return(
+            return (
             <tr key={stock._id}>
               <td>{index + 1}</td>
               <td>{stock.brandName}</td>
               <td>{stock.size}</td>
-              <td>{stock.opening_balance}</td> 
-              <td>{stock.new_stock.reduce((acc, num) => acc + num, 0)}<br></br><button onClick={() => handleStockOpenModal(stock,'stock')}>Add Stock</button></td>   
+              <td>{stock.opening_balance}</td>
+              <td>
+                <div className="d-flex justify-content-end align-items-center">
+                  <span className="me-4">
+                    {stock.new_stock.reduce((acc, num) => acc + num, 0)}
+                  </span>
+                  
+                  <Button className="me-4" variant="secondary" size="sm" onClick={() => handleStockOpenModal(stock, 'stock')}>
+                    Add Stock
+                  </Button>
+                </div>
+              </td>
               <td>{stock.stock}</td>
-              <td><form onSubmit={(e)=>handleAvailableStock(e, stock._id)}><input type="number" onChange={(e)=>setAvailableStock(e.target.value)} required/><button type='submit'>Add</button></form></td>
+              <td>
+                <Form onSubmit={(e) => handleAvailableStock(e, stock._id, stock.stock)}>
+                  <InputGroup>
+                    <Form.Control
+                      type="number"
+                      onChange={(e) => setAvailableStock(e.target.value)}
+                       style={{ width: '40px' }}
+                      required
+                      className="form-control-sm"
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {"errors"}
+                    </Form.Control.Feedback>
+                    <Button 
+                      variant="secondary" 
+                      type="submit" 
+                      className="btn-sm" 
+                    >
+                      Add
+                    </Button>
+                  </InputGroup>
+                </Form>
+              </td>
+
               <td>{stock.sales}</td>
               <td>{stock.price}</td>
               <td>{stock.remainingStock}</td>
               <td>{stock.sales * stock.price}</td>
             </tr>
-            );})}
-            {stocks.length > 0 ?<><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th>{totalAll}</th></>:""}
+          )})}
+         {stocks.length > 0 && (
             <tr>
+              <td colSpan="10" className="text-end fw-bold">Total</td>
+              <td>{totalAll}</td>
+            </tr>
+          )}
+          <tr>
               <th></th>
               <th>Size</th>
               <th>Counts</th>
@@ -220,93 +291,101 @@ const Table = () => {
               <td>{sizeCount.F ? sizeCount.F : 0}</td>
             </tr>
         </tbody>
-      </table>
-      <ReactModal
-                    isOpen={stockModalIsOpen}
-                    onRequestClose={handleStockCloseModal}
-                    contentLabel="Add New Stock"
-                    className="modal"
-                    overlayClassName="overlay"
-                >
-                    <h2>Add Additional Stock</h2>
-                    <form onSubmit={handleAdditionalStockSubmit}>
-                    <label>Brand Name</label>
-                    <input
-                        type="text"
-                        name="brandName"
-                        value={currentStock?.brandName}
-                        disabled
-                    />
-                    <label>Current {currentMethod == 'stock' ? 'Stock' : "Sales" }</label>
-                    <input
-                        type="text"
-                        name="brandName"
-                        value={currentStock?.[currentMethod]}
-                        disabled
-                    />
-                    <label>Additional {currentMethod == 'stock' ? 'Stock' : "Sales" }</label>
-                    <input
-                        type="number"
-                        name="stock"
-                        onChange={handleChangeinput}
-                        required
-                    />
-                    <label style={{color : "red"}}>{currentMethod === 'sales' && additionalStock > currentStock.remainingStock ? "Sales Less Than Remaining Stock" : ""}</label>
-                    <button type="submit"  disabled={currentMethod === 'sales' && additionalStock > currentStock.remainingStock}> Add Additional {currentMethod == 'stock' ? 'Stock' : "Sales" }</button>
-                    <button type="button" onClick={handleStockCloseModal}>Cancel</button>
-                    </form>
-                </ReactModal>
-              <div className="button-container">
-                <button onClick={handleOpenModal} className="add-new-button">Add New</button> 
-                <button onClick={handleCloseDay} className="danger-button">Close Today Sales</button>
-            </div>
-      <ReactModal
-        isOpen={modalIsOpen}
-        onRequestClose={handleCloseModal}
-        contentLabel="Add New Stock"
-        className="modal"
-        overlayClassName="overlay"
-      >
-        <h2>Add New Stock</h2>
-        <form onSubmit={handleSubmit}>
-          <label>Brand Name</label>
-          <input
-            type="text"
-            name="brandName"
-            value={newStock.brandName}
-            onChange={handleChange}
-            required
-          />
-          <label>Size</label>
-          <select name="size" className= "select-input" onChange={handleChange}>
-            <option value={""}>Select Size </option>
-            <option value={"Q"}>Q (750 ml)</option>
-            <option value={"P"}>P (375 ml)</option>
-            <option value={"F"}>F (1000ml)</option>
-          </select>
-          <label>Stock</label>
-          <input
-            type="number"
-            name="stock"
-            value={newStock.stock}
-            onChange={handleChange}
-            required
-          />
-          <label>Price</label>
-          <input
-            type="number"
-            name="price"
-            value={newStock.price}
-            onChange={handleChange}
-            required
-          />
-  
-          <button type="submit">Add Stock</button>
-          <button type="button" onClick={handleCloseModal}>Cancel</button>
-        </form>
-      </ReactModal>
+      </BootstrapTable>
+      <div className="d-flex justify-content-end gap-3">
+        <button onClick={handleCloseDay} className="danger-button btn btn-danger">Close Today Sales</button>
+      </div>
 
-    </div>
+      {/* Add New Stock Modal */}
+      <Modal show={modalIsOpen} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add New Stock</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group controlId="brandName">
+              <Form.Label>Brand Name</Form.Label>
+              <Form.Control 
+                type="text" 
+                name="brandName" 
+                value={newStock.brandName} 
+                onChange={handleChange} 
+                required 
+                placeholder="Enter brand name" 
+              />
+            </Form.Group>
+
+            <Form.Group controlId="size" className="mt-3">
+              <Form.Label>Size</Form.Label>
+              <Form.Control as="select" name="size" onChange={handleChange} required>
+                <option value="">Select Size</option>
+                <option value="Q">Q (750 ml)</option>
+                <option value="P">P (375 ml)</option>
+                <option value="F">F (1000 ml)</option>
+              </Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId="stock" className="mt-3">
+              <Form.Label>Stock</Form.Label>
+              <Form.Control 
+                type="number" 
+                name="stock" 
+                value={newStock.stock} 
+                onChange={handleChange} 
+                required 
+                placeholder="Enter stock quantity" 
+              />
+            </Form.Group>
+
+            <Form.Group controlId="price" className="mt-3">
+              <Form.Label>Price</Form.Label>
+              <Form.Control 
+                type="number" 
+                name="price" 
+                value={newStock.price} 
+                onChange={handleChange} 
+                required 
+                placeholder="Enter price" 
+              />
+            </Form.Group>
+
+            {/* Button Section */}
+            <div className="mt-4 d-flex justify-content-end gap-2">
+              <Button variant="secondary" onClick={handleCloseModal}>Cancel</Button>
+              <Button variant="primary" type="submit">Add Stock</Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+
+      {/* Additional Stock Modal */}
+      <Modal show={stockModalIsOpen} onHide={handleStockCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Additional {currentMethod === 'stock' ? 'Stock' : 'Sales'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleAdditionalStockSubmit}>
+            <Form.Group controlId="brandName">
+              <Form.Label>Brand Name</Form.Label>
+              <Form.Control type="text" value={currentStock?.brandName} disabled />
+            </Form.Group>
+            <Form.Group controlId="currentMethod">
+              <Form.Label>Current {currentMethod === 'stock' ? 'Stock' : 'Sales'}</Form.Label>
+              <Form.Control type="text" value={currentStock ? (currentMethod === 'stock' ? currentStock.stock : currentStock.sales) : ''} disabled />
+            </Form.Group>
+            <Form.Group controlId="additionalStock">
+              <Form.Label>Additional {currentMethod === 'stock' ? 'Stock' : 'Sales'}</Form.Label>
+              <Form.Control type="number" onChange={handleChangeinput} required />
+            </Form.Group>
+            <div className="mt-4 d-flex justify-content-end gap-2">
+              <Button variant="primary" type="submit">Add</Button>
+              <Button variant="secondary" onClick={handleStockCloseModal}>Cancel</Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    </Container>
   );
 };
 
