@@ -1,0 +1,10 @@
+@media (max-width: 768px) {
+    .table-responsive {
+      overflow: auto;
+    }
+  
+    .btn {
+      margin-bottom: 5px;
+    }
+  }
+  

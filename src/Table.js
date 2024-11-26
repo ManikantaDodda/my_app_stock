@@ -437,18 +437,24 @@ const Table = () => {
     <Container>
       <ToastContainer />
       <h1 className="text-center my-4">Stock Management</h1>
-      <div className="d-flex justify-content-between mb-4">
-        <div className="d-flex gap-3">
-          <Button variant="info" size='lg' onClick={() => navigate('/history')}>History</Button>
-          <button onClick={handleOpenModal} className="add-new-button btn btn-primary">Add New</button>
-        </div>
+      <div className="d-flex justify-content-between mb-4 flex-wrap">
+        <Button variant="info" size="sm" onClick={() => navigate('/history')}>
+          History
+        </Button>
+        <Button variant="primary" size="sm" onClick={() => {}}>
+          Add New
+        </Button>
         <div className="d-flex gap-2">
-          <Button variant="success" onClick={exportToExcel}>Export to Excel</Button>
-          <Button variant="danger" onClick={exportToPDF}>Export to PDF</Button>
-        </div>
-        <h4>{new Date(currentDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</h4>
+          <Button variant="success" size="sm" onClick={exportToExcel}>
+            Export to Excel
+          </Button>
+          <Button variant="danger" size="sm" onClick={exportToPDF}>
+            Export to PDF
+          </Button>
+        </div>  
+        <Button variant="info">{new Date(currentDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</Button>
       </div>
-
+      <div className="table-responsive">
       <BootstrapTable striped bordered hover>
       <thead>
         <tr>
@@ -567,9 +573,11 @@ const Table = () => {
             </tr>
         </tbody>
       </BootstrapTable>
-      <div className="d-flex justify-content-end gap-3">
+      <div className="d-flex justify-content-end gap-3 me-8">
         <button onClick={handleCloseDay} className="danger-button btn btn-danger">Close Today Sales</button>
       </div>
+      <div></div>
+    </div>
 
       {/* Add New Stock Modal */}
       <Modal show={modalIsOpen} onHide={handleCloseModal}>
