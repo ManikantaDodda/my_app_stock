@@ -24,6 +24,9 @@ const Table = () => {
   const [currentDate, setCurrentDate] = useState("");
   const [availableStock, setAvailableStock] = useState(0);
   const [sizeCount, setSizeCount] = useState({});
+  const [totalStockCash, setTotalStockCash] = useState(0);
+  const [rateModalIsOpen, setRateModalIsOpen] = useState(false);
+  const [newPrice, setNewPrice] = useState(0);
   const [newStock, setNewStock] = useState({
     uid: uid,
     brandName: '',
@@ -49,12 +52,93 @@ const Table = () => {
       "Closing Balance": stock.remainingStock,
       "Cash": stock.sales * stock.price,
     }));
-
+  
+  
+    // Append totals row
+    formattedData.push({
+      "S.No": "",
+      "Brand Name": "",
+      "Size": "",
+      "Opening Balance": "",
+      "Purchase": "",
+      "Total": "",
+      "Available Stock": "",
+      "Sales": "",
+      "Rate": "",
+      "Closing Balance": "Total Cash",
+      "Cash": totalStockCash ,
+    });
+  
+    // Append size counts row
+    formattedData.push({
+      "S.No": "",
+      "Brand Name": "Size ",
+      "Size": "Counts",
+      "Opening Balance": "",
+      "Purchase": "",
+      "Total": "",
+      "Available Stock": "",
+      "Sales": "",
+      "Rate": "",
+      "Closing Balance": "",
+      "Cash": "",
+    });
+    formattedData.push({
+      "S.No": "",
+      "Brand Name": " Q ",
+      "Size": `${sizeCount.Q ? sizeCount.Q : 0 }`,
+      "Opening Balance": "",
+      "Purchase": "",
+      "Total": "",
+      "Available Stock": "",
+      "Sales": "",
+      "Rate": "",
+      "Closing Balance": "",
+      "Cash": "",
+    });
+    formattedData.push({
+      "S.No": "",
+      "Brand Name": " P ",
+      "Size":`${sizeCount.P ? sizeCount.P : 0 }`,
+      "Opening Balance": "",
+      "Purchase": "",
+      "Total": "",
+      "Available Stock": "",
+      "Sales": "",
+      "Rate": "",
+      "Closing Balance": "",
+      "Cash": "",
+    });
+    formattedData.push({
+      "S.No": "",
+      "Brand Name": " F ",
+      "Size": `${sizeCount.F ? sizeCount.F : 0 }`,
+      "Opening Balance": "",
+      "Purchase": "",
+      "Total": "",
+      "Available Stock": "",
+      "Sales": "",
+      "Rate": "",
+      "Closing Balance": "",
+      "Cash": "",
+    });
+  
+    // Generate worksheet and workbook
     const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
+  
+    // Append worksheet to workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, "Stocks");
-    XLSX.writeFile(workbook, "Stock_Data.xlsx");
+  
+    // Write file
+    const currData = new Date(currentDate).toLocaleDateString('en-GB', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    XLSX.writeFile(workbook, `Stock_Data_${currData}.xlsx`);
   };
+  
 
   // Export to PDF
   const exportToPDF = () => {
@@ -86,13 +170,90 @@ const Table = () => {
       stock.sales * stock.price,
     ]);
 
+
+  // Add a totals row
+  tableRows.push([
+    "", // Empty S.No
+    "", // Empty Brand Name
+    "", // Empty Size
+    "", // Empty Opening Balance
+    "", // Empty Purchase
+    "", // Empty Total
+    "", // Empty Available Stock
+    "", // Empty Sales
+    "", // Empty Rate
+    "Total Cash", // Label
+    totalStockCash, // Total Cash Value
+  ]);
+
+   tableRows.push([
+    "", 
+    "Size",
+    "Counts",
+    "",
+    "",
+    "",
+    "", 
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+
+    tableRows.push([
+      "", // Empty S.No
+      `Q`,
+      `${sizeCount.Q ? sizeCount.Q : 0 }`,
+      "",
+      "",
+      "", 
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+    tableRows.push([
+      "", // Empty S.No
+      `P`,
+      `${sizeCount.P ? sizeCount.P : 0 }`,
+      "",
+      "",
+      "", 
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+    tableRows.push([
+      "", // Empty S.No
+      `F`,
+      `${sizeCount.F ? sizeCount.F : 0 }`,
+      "",
+      "",
+      "", 
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+
+
     doc.text("Stock Management Report", 14, 15);
     doc.autoTable({
       head: [tableColumn],
       body: tableRows,
       startY: 20,
     });
-    doc.save("Stock_Report.pdf");
+    const currData = new Date(currentDate).toLocaleDateString('en-GB', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    doc.save(`Stock_Report_${currData}.pdf`);
   };
 
 
@@ -126,9 +287,25 @@ const Table = () => {
     setAdditionalStock(0);
   };
 
+  const handleRateOpenModal = (stock) => {
+    setCurrentStock(stock);
+    setRateModalIsOpen(true);
+  };
+
+  const handleRateCloseModal = () => {
+    setRateModalIsOpen(false);
+    setCurrentStock(null);
+    setNewPrice(0);
+    
+  };
+
   const handleChangeinput = (e) => {
     setAdditionalStock(Number(e.target.value));
   };
+
+  const handlePriceInput = (e) => {
+    setNewPrice(e.target.value);
+  }
 
   const handleOpenModal = () => {
     setModalIsOpen(true);
@@ -178,6 +355,23 @@ const Table = () => {
     }
   };
 
+  const handleRateSubmit = async (e) => {
+    e.preventDefault();
+    if (currentStock) {
+      try {
+        const response = await axios.post(`${currentUrl}/api/update-price`, {
+          id: currentStock._id,
+          newPrice,
+        });
+        setStocks(stocks.map(stock => stock._id === currentStock._id ? response.data : stock));
+        handleRateCloseModal();
+        toast.success("Successfully Updated!");
+      } catch (error) {
+        console.error('Error updating stock:', error);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await axios.post(`${currentUrl}/api/add-stock`, {
@@ -203,7 +397,7 @@ const Table = () => {
       date: currentDate,
     });
   };
-  let totalAll = 0;
+
   const handleAvailableStock = async(e, stock_id, stock) =>{
     e.preventDefault();
     if (availableStock <= stock && availableStock > 0) {
@@ -231,6 +425,11 @@ const Table = () => {
       acc[item.size] = (acc[item.size] || 0) + 1;
       return acc;
     }, {});
+    const totalCash = stocks.reduce(
+      (total, stock) => total + stock.sales * stock.price,
+      0
+    );
+    setTotalStockCash(totalCash);
     setSizeCount(counts);
   }, [stocks]);
 
@@ -283,7 +482,6 @@ const Table = () => {
         </thead>
         <tbody>
           {stocks.map((stock, index) => {
-            totalAll += stock.sales * stock.price;
             return (
             <tr key={stock._id}>
               <td>{index + 1}</td>
@@ -327,7 +525,16 @@ const Table = () => {
               </td>
 
               <td>{stock.sales}</td>
-              <td>{stock.price}</td>
+              <td>
+                <div className="d-flex justify-content-end align-items-center">
+                <span className="me-4">
+                {stock.price}
+                </span>
+              <Button className="me-4" variant="info" size="sm" onClick={() => handleRateOpenModal(stock)}>
+                    New Price
+                  </Button>
+                  </div>
+              </td>
               <td>{stock.remainingStock}</td>
               <td>{stock.sales * stock.price}</td>
             </tr>
@@ -335,7 +542,7 @@ const Table = () => {
          {stocks.length > 0 && (
             <tr>
               <td colSpan="10" className="text-end fw-bold">Total</td>
-              <td>{totalAll}</td>
+              <td>{totalStockCash}</td>
             </tr>
           )}
           <tr>
@@ -449,6 +656,33 @@ const Table = () => {
             <div className="mt-4 d-flex justify-content-end gap-2">
               <Button variant="primary" type="submit">Add</Button>
               <Button variant="secondary" onClick={handleStockCloseModal}>Cancel</Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Rate Modal */}
+      <Modal show={rateModalIsOpen} onHide={handleRateCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Price Change</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleRateSubmit}>
+            <Form.Group controlId="brandName">
+              <Form.Label>Brand Name</Form.Label>
+              <Form.Control type="text" value={currentStock?.brandName} disabled />
+            </Form.Group>
+            <Form.Group controlId="currentMethod">
+              <Form.Label>Current Price</Form.Label>
+              <Form.Control type="text" value={currentStock?.price} disabled />
+            </Form.Group>
+            <Form.Group controlId="additionalStock">
+              <Form.Label> New Price</Form.Label>
+              <Form.Control type="number" onChange={handlePriceInput} required />
+            </Form.Group>
+            <div className="mt-4 d-flex justify-content-end gap-2">
+              <Button variant="primary" type="submit">Add</Button>
+              <Button variant="secondary" onClick={handleRateCloseModal}>Cancel</Button>
             </div>
           </Form>
         </Modal.Body>
