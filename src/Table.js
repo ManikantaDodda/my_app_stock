@@ -5,6 +5,9 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, Button, Form, Table as BootstrapTable, Container, InputGroup } from 'react-bootstrap';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -31,6 +34,67 @@ const Table = () => {
     remainingStock: 0,
     date: currentDate,
   });
+
+  const exportToExcel = () => {
+    const formattedData = stocks.map((stock, index) => ({
+      "S.No": index + 1,
+      "Brand Name": stock.brandName,
+      "Size": stock.size,
+      "Opening Balance": stock.opening_balance,
+      "Purchase": stock.new_stock.reduce((acc, num) => acc + num, 0),
+      "Total": stock.stock,
+      "Available Stock": stock.remainingStock,
+      "Sales": stock.sales,
+      "Rate": stock.price,
+      "Closing Balance": stock.remainingStock,
+      "Cash": stock.sales * stock.price,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Stocks");
+    XLSX.writeFile(workbook, "Stock_Data.xlsx");
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const tableColumn = [
+      "S.No",
+      "Brand Name",
+      "Size",
+      "Opening Balance",
+      "Purchase",
+      "Total",
+      "Available Stock",
+      "Sales",
+      "Rate",
+      "Closing Balance",
+      "Cash",
+    ];
+    const tableRows = stocks.map((stock, index) => [
+      index + 1,
+      stock.brandName,
+      stock.size,
+      stock.opening_balance,
+      stock.new_stock.reduce((acc, num) => acc + num, 0),
+      stock.stock,
+      stock.remainingStock,
+      stock.sales,
+      stock.price,
+      stock.remainingStock,
+      stock.sales * stock.price,
+    ]);
+
+    doc.text("Stock Management Report", 14, 15);
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+    });
+    doc.save("Stock_Report.pdf");
+  };
+
 
   useEffect(() => {
     fetchStocks();
@@ -178,6 +242,10 @@ const Table = () => {
         <div className="d-flex gap-3">
           <Button variant="info" size='lg' onClick={() => navigate('/history')}>History</Button>
           <button onClick={handleOpenModal} className="add-new-button btn btn-primary">Add New</button>
+        </div>
+        <div className="d-flex gap-2">
+          <Button variant="success" onClick={exportToExcel}>Export to Excel</Button>
+          <Button variant="danger" onClick={exportToPDF}>Export to PDF</Button>
         </div>
         <h4>{new Date(currentDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</h4>
       </div>
