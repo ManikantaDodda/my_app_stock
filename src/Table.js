@@ -441,7 +441,7 @@ const Table = () => {
         <Button variant="info" size="sm" onClick={() => navigate('/history')}>
           History
         </Button>
-        <Button variant="primary" size="sm" onClick={() => {}}>
+        <Button variant="primary" size="sm" onClick={handleOpenModal}>
           Add New
         </Button>
         <div className="d-flex gap-2">
