@@ -454,7 +454,7 @@ const Table = () => {
         </div>  
         <Button variant="info">{new Date(currentDate).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })}</Button>
       </div>
-      <div className="table-responsive">
+      <div>
       <BootstrapTable striped bordered hover>
       <thead>
         <tr>
