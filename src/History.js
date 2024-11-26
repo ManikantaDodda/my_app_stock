@@ -289,10 +289,11 @@ const History = () => {
               day: 'numeric',
             })}
           </h4>
+          {stocks.length > 0 ? 
           <div className="d-flex gap-2">
             <Button variant="success" onClick={exportToExcel}>Export to Excel</Button>
             <Button variant="danger" onClick={exportToPDF}>Export to PDF</Button>
-          </div>
+          </div> : ""}
         </div>
       )}
 
@@ -320,13 +321,13 @@ const History = () => {
                   <td>{index + 1}</td>
                   <td>{stock.brandName}</td>
                   <td>{stock.size}</td>
-                  <td>{stock.openingBalance}</td>
-                  <td>{stock.purchase}</td>
-                  <td>{stock.total}</td>
+                  <td>{stock.opening_balance}</td>
+                  <td>{stock.new_stock.reduce((acc, num) => acc + num, 0)}</td>
+                  <td>{stock.stock}</td>
                   <td>{stock.remainingStock}</td>
                   <td>{stock.sales}</td>
                   <td>{stock.price}</td>
-                  <td>{stock.closingBalance}</td>
+                  <td>{stock.remainingStock}</td>
                   <td>{stock.sales * stock.price}</td>
                 </tr>
               );
